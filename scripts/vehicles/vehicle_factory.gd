@@ -57,7 +57,6 @@ static func create_vehicle_data_from_dict(data_dict: Dictionary) -> VehicleData:
 	)
 	
 	# Wheel data
-	vehicle_data.wheel_size = data_dict.get("wheel_size", 0.5)
 	var wheel_positions = data_dict.get("wheel_positions", [])
 	vehicle_data.wheel_positions.clear()
 	

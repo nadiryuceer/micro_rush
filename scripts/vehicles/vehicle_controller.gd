@@ -13,6 +13,9 @@ class_name VehicleController
 @export var steering_drag := 2.2
 @export var steering_drag_boosted := 1.2
 
+# Store original wheel rotations from GLB
+var wheel_original_rotations: Dictionary = {}
+
 @export var wall_speed_loss := 0.85   # NEW: how hard walls kill speed
 @export var min_stop_speed := 0.6     # NEW: snap to zero below this
 
@@ -84,7 +87,7 @@ func setup_from_data(data: VehicleData):
 	setup_collision(data.collision_size)
 	
 	# Setup wheels
-	setup_wheels(data.wheel_positions, data.wheel_size)
+	setup_wheels()
 
 func load_vehicle_mesh(mesh_path: String):
 	print("Loading vehicle mesh from: ", mesh_path)
@@ -97,6 +100,13 @@ func load_vehicle_mesh(mesh_path: String):
 		var mesh_instance = mesh_scene.instantiate()
 		print("Mesh instance created: ", mesh_instance.get_class())
 		
+		# Show mesh transform immediately after instantiation
+		print("=== MESH TRANSFORM (CODE LOADED) ===")
+		print("Initial rotation: ", mesh_instance.rotation_degrees)
+		print("Initial position: ", mesh_instance.position)
+		print("Initial scale: ", mesh_instance.scale)
+		print("=====================================")
+		
 		# Replace existing CarMesh
 		var old_mesh = $Visual/CarMesh
 		$Visual.remove_child(old_mesh)
@@ -104,6 +114,13 @@ func load_vehicle_mesh(mesh_path: String):
 		
 		$Visual.add_child(mesh_instance)
 		mesh_instance.name = "CarMesh"
+		
+		# Show transform after being added to scene tree
+		print("=== MESH TRANSFORM (AFTER PARENTING) ===")
+		print("Final rotation: ", mesh_instance.rotation_degrees)
+		print("Final position: ", mesh_instance.position)
+		print("Final scale: ", mesh_instance.scale)
+		print("=====================================")
 		print("Mesh loaded and attached successfully")
 	else:
 		push_error("Failed to load mesh scene: " + mesh_path)
@@ -115,7 +132,7 @@ func setup_collision(collision_size: Vector3):
 		# Adjust collision position
 		collision_shape.position.y = collision_size.y * 0.5
 
-func setup_wheels(wheel_positions: Array[Vector3], wheel_size: float):
+func setup_wheels():
 	# Don't create custom wheels - use existing wheels from GLB mesh
 	wheel_nodes.clear()
 	
@@ -145,6 +162,9 @@ func find_existing_wheels(node: Node):
 			print("Is Front: ", "front" in child.name.to_lower())
 			print("========================")
 			
+			# Store original rotation from GLB
+			wheel_original_rotations[child] = child.rotation.y
+			
 			# Separate front and rear wheels by name
 			if "front" in child.name.to_lower():
 				wheel_nodes.append(child)  # Add front wheels first
@@ -165,16 +185,14 @@ func update_wheel_visuals(delta: float):
 	# Steering angle based on user input
 	var steering_angle_deg = steering_input * max_steering_angle
 	
-	# Apply steering to front wheels (first 2 wheels found)
-	# Note: We need to identify which are front vs rear wheels
-	for i in range(min(2, wheel_nodes.size())):  # First 2 wheels = front wheels
-		var wheel = wheel_nodes[i]
-		wheel.rotation.y = deg_to_rad(steering_angle_deg)
-	
-	# Rear wheels (remaining wheels) don't steer
-	for i in range(2, wheel_nodes.size()):
-		var wheel = wheel_nodes[i]
-		wheel.rotation.y = 0.0
+	# Apply steering to front wheels only (based on their names)
+	for wheel in wheel_nodes:
+		if "front" in wheel.name.to_lower():
+			# Get the original rotation from GLB (stored during setup)
+			var original_rotation = wheel_original_rotations.get(wheel, 0.0)
+			# Apply steering relative to original GLB rotation
+			wheel.rotation.y = original_rotation + deg_to_rad(steering_angle_deg)
+		# Rear wheels: don't touch their rotation at all
 
 
 # ---------------- INPUT ----------------

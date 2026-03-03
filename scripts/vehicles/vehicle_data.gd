@@ -10,7 +10,6 @@ extends Resource
 @export var size_category: SizeCategory
 
 @export var wheel_positions: Array[Vector3]
-@export var wheel_size: float = 0.5
 @export var collision_size: Vector3 = Vector3(2.0, 1.0, 4.0)
 
 @export var vehicle_stats: VehicleStats
