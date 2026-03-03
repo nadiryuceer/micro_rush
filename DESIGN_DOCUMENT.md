@@ -25,6 +25,14 @@ Transform the existing NMMI car demo into a complete Micro Machines V4-inspired 
 - **Chaotic multiplayer action** (up to 4 players)
 - **Power-up combat mechanics**
 - **Diverse track environments**
+
+### World Scale Constraints
+- **1 Godot unit = 1 meter** (real-world scale)
+- **Toy vehicle dimensions**: 0.15-0.18m length, 0.08-0.10m width, 0.04-0.06m height
+- **Vehicle mesh scale = 1.0** (no rescaling)
+- **Forward direction**: -Z axis (negative Z is forward)
+- **Gravity**: 9.8 m/s²
+- **World elements**: Kitchen tiles (0.5m), counter height (0.9m), track size (60x60m minimum)
 - **Progression system** with unlockable content
 - **Local multiplayer** focus with online potential
 

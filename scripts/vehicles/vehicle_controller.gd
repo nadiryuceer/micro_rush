@@ -1,5 +1,8 @@
-extends CharacterBody3D
+extends BaseVehicle
 
+class_name VehicleController
+
+# Physics parameters (loaded from vehicle_data)
 @export var acceleration := 6.5
 @export var max_speed := 6
 @export var steering_speed := 3.2
@@ -10,7 +13,6 @@ extends CharacterBody3D
 @export var steering_drag := 2.2
 @export var steering_drag_boosted := 1.2
 
-
 @export var wall_speed_loss := 0.85   # NEW: how hard walls kill speed
 @export var min_stop_speed := 0.6     # NEW: snap to zero below this
 
@@ -19,7 +21,6 @@ extends CharacterBody3D
 @export var boost_steering_multiplier := 0.35
 
 var boosting := false
-
 
 @export var controllable := true
 @export var can_be_eliminated := true
@@ -38,6 +39,10 @@ var vertical_velocity := 0.0
 
 @export var air_steering_multiplier := 0.25
 
+# Wheel rotation parameters
+@export var wheel_rotation_multiplier := 2.0
+@export var max_steering_angle := 30.0  # degrees
+
 
 
 
@@ -51,11 +56,125 @@ func _physics_process(delta: float) -> void:
 	velocity.y = vertical_velocity
 	move_and_slide()
 	align_to_floor(delta)
+	update_wheel_visuals(delta)
 
 	vertical_velocity = velocity.y
 
+	handle_wall_collisions()
 
-	handle_wall_collisions()   # NEW
+# Data-driven setup
+func setup_from_data(data: VehicleData):
+	vehicle_data = data
+	
+	# Load physics stats
+	if data.vehicle_stats:
+		acceleration = data.vehicle_stats.acceleration
+		max_speed = data.vehicle_stats.max_speed
+		steering_speed = data.vehicle_stats.steering_speed
+		grip = data.vehicle_stats.grip
+		boost_force = data.vehicle_stats.boost_force
+		drag = data.vehicle_stats.drag
+	else:
+		push_error("Vehicle stats not found for: " + data.display_name)
+	
+	# Load visual mesh
+	load_vehicle_mesh(data.mesh_path)
+	
+	# Setup collision
+	setup_collision(data.collision_size)
+	
+	# Setup wheels
+	setup_wheels(data.wheel_positions, data.wheel_size)
+
+func load_vehicle_mesh(mesh_path: String):
+	print("Loading vehicle mesh from: ", mesh_path)
+	if not FileAccess.file_exists(mesh_path):
+		push_error("Vehicle mesh not found: " + mesh_path)
+		return
+	
+	var mesh_scene = load(mesh_path)
+	if mesh_scene:
+		var mesh_instance = mesh_scene.instantiate()
+		print("Mesh instance created: ", mesh_instance.get_class())
+		
+		# Replace existing CarMesh
+		var old_mesh = $Visual/CarMesh
+		$Visual.remove_child(old_mesh)
+		old_mesh.queue_free()
+		
+		$Visual.add_child(mesh_instance)
+		mesh_instance.name = "CarMesh"
+		print("Mesh loaded and attached successfully")
+	else:
+		push_error("Failed to load mesh scene: " + mesh_path)
+
+func setup_collision(collision_size: Vector3):
+	var collision_shape = $CollisionShape3D
+	if collision_shape and collision_shape.shape is BoxShape3D:
+		collision_shape.shape.size = collision_size
+		# Adjust collision position
+		collision_shape.position.y = collision_size.y * 0.5
+
+func setup_wheels(wheel_positions: Array[Vector3], wheel_size: float):
+	# Don't create custom wheels - use existing wheels from GLB mesh
+	wheel_nodes.clear()
+	
+	# Find existing wheel nodes in the loaded mesh
+	var visual_node = $Visual
+	if visual_node:
+		find_existing_wheels(visual_node)
+	
+	print("Found ", wheel_nodes.size(), " existing wheel nodes in mesh")
+	for i in range(wheel_nodes.size()):
+		var wheel = wheel_nodes[i]
+		var pos_type = "Front" if i < 2 else "Rear"
+		print("  ", pos_type, " wheel: ", wheel.name, " at ", wheel.position)
+
+func find_existing_wheels(node: Node):
+	# Recursively search for wheel nodes in the mesh hierarchy
+	for child in node.get_children():
+		# Check if this node is a wheel based on naming convention
+		if child is MeshInstance3D and "wheel" in child.name.to_lower():
+			# Show detailed info for all wheel nodes
+			print("=== WHEEL NODE FOUND ===")
+			print("Name: ", child.name)
+			print("Position: ", child.position)
+			print("Rotation: ", child.rotation_degrees)
+			print("Scale: ", child.scale)
+			print("Parent: ", child.get_parent().name)
+			print("Is Front: ", "front" in child.name.to_lower())
+			print("========================")
+			
+			# Separate front and rear wheels by name
+			if "front" in child.name.to_lower():
+				wheel_nodes.append(child)  # Add front wheels first
+				print("→ Classified as FRONT wheel")
+			elif "rear" in child.name.to_lower() or "back" in child.name.to_lower():
+				wheel_nodes.append(child)  # Add rear wheels after
+				print("→ Classified as REAR wheel")
+			else:
+				print("→ WARNING: Wheel node doesn't specify front/rear!")
+		
+		# Recursively check children
+		find_existing_wheels(child)
+
+func update_wheel_visuals(delta: float):
+	if wheel_nodes.size() == 0:
+		return
+	
+	# Steering angle based on user input
+	var steering_angle_deg = steering_input * max_steering_angle
+	
+	# Apply steering to front wheels (first 2 wheels found)
+	# Note: We need to identify which are front vs rear wheels
+	for i in range(min(2, wheel_nodes.size())):  # First 2 wheels = front wheels
+		var wheel = wheel_nodes[i]
+		wheel.rotation.y = deg_to_rad(steering_angle_deg)
+	
+	# Rear wheels (remaining wheels) don't steer
+	for i in range(2, wheel_nodes.size()):
+		var wheel = wheel_nodes[i]
+		wheel.rotation.y = 0.0
 
 
 # ---------------- INPUT ----------------

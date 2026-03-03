@@ -1,0 +1,29 @@
+{
+  "vehicle_id": "ambulance",
+  "display_name": "Ambulance",
+  "description": "Emergency medical vehicle with good handling",
+  "mesh_path": "res://assets/models/vehicles/ambulance.glb",
+  "vehicle_type": 7,
+  "size_category": 2,
+  "collision_size": {
+    "x": 0.09,
+    "y": 0.05,
+    "z": 0.17
+  },
+  "wheel_size": 0.02,
+  "wheel_positions": [
+    {"x": 0.035, "y": -0.025, "z": 0.06},
+    {"x": -0.035, "y": -0.025, "z": 0.06},
+    {"x": 0.035, "y": -0.025, "z": -0.05},
+    {"x": -0.035, "y": -0.025, "z": -0.05}
+  ],
+  "vehicle_stats": {
+    "max_speed": 6.0,
+    "acceleration": 6.5,
+    "steering_speed": 3.2,
+    "grip": 18.0,
+    "boost_force": 35.0,
+    "drag": 6.0,
+    "weight": 1.2
+  }
+}

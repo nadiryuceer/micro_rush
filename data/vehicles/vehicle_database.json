@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "description": "Master database of all available vehicles",
+  "last_updated": "2026-03-03",
+  "total_vehicles": 15,
+  "categories": {
+    "sports_cars": ["race", "race-future", "sedan-sports", "hatchback-sports"],
+    "sedans": ["sedan", "taxi", "police"],
+    "muscle_cars": [],
+    "suvs": ["suv", "suv-luxury"],
+    "trucks": ["truck", "truck-flat", "firetruck", "garbage-truck", "delivery", "delivery-flat"],
+    "vans": ["van"],
+    "utility": ["tractor", "tractor-police", "tractor-shovel"],
+    "special": ["ambulance", "box", "cone", "cone-flat"]
+  },
+  "size_distribution": {
+    "small": 4,
+    "medium": 6,
+    "large": 4,
+    "extra_large": 1
+  }
+}
