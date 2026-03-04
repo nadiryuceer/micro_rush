@@ -142,9 +142,8 @@ func setup_wheels():
 		find_existing_wheels(visual_node)
 	
 	print("Found ", wheel_nodes.size(), " existing wheel nodes in mesh")
-	for i in range(wheel_nodes.size()):
-		var wheel = wheel_nodes[i]
-		var pos_type = "Front" if i < 2 else "Rear"
+	for wheel in wheel_nodes:
+		var pos_type = "Front" if "front" in wheel.name.to_lower() else "Rear"
 		print("  ", pos_type, " wheel: ", wheel.name, " at ", wheel.position)
 
 func find_existing_wheels(node: Node):

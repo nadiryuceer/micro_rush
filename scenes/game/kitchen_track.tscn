@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://dabj8peeucvi1"]
+[gd_scene load_steps=5 format=3 uid="uid://dabj8peeucvi1"]
 
 [ext_resource type="PackedScene" uid="uid://p4dnlqcoqrr7" path="res://templates/tracks/elements/floor.tscn" id="1_2w1ao"]
 [ext_resource type="PackedScene" uid="uid://hop0w5b0vf0" path="res://templates/tracks/elements/wall.tscn" id="1_7r3vr"]
 [ext_resource type="PackedScene" uid="uid://psrsrnfllbyw" path="res://templates/tracks/elements/ramp.tscn" id="3_2w1ao"]
+[ext_resource type="PackedScene" uid="uid://dyickuhputnes" path="res://assets/Models/tracks/kitchen/kitchen_table.glb" id="4_cncgb"]
 
 [node name="Track" type="Node3D"]
 
@@ -27,3 +28,5 @@ transform = Transform3D(1, 0, 0, 0, 5, 0, 0, 0, 30, -15, 2.5, 0)
 
 [node name="Ramp" parent="Elements" instance=ExtResource("3_2w1ao")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
+
+[node name="kitchen_table" parent="." instance=ExtResource("4_cncgb")]

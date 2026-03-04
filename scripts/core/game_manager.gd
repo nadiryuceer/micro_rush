@@ -42,9 +42,6 @@ func test_data_driven_vehicles():
 				camera_rig.players.append(vehicle)
 				print("Vehicle added to camera follow list")
 			
-			# Create debug side camera
-			create_debug_side_camera(vehicle)
-			
 			current_vehicles.append(vehicle)
 			vehicle_spawned.emit(vehicle)
 			
@@ -54,34 +51,6 @@ func test_data_driven_vehicles():
 			print("  Grip: ", vehicle.grip)
 	else:
 		print("Failed to load ambulance data")
-
-func create_debug_side_camera(vehicle: BaseVehicle):
-	# Create debug camera
-	var debug_camera = Camera3D.new()
-	debug_camera.name = "DebugSideCamera"
-	
-	# Position camera to the side and slightly above the vehicle
-	# Side view (positive X = right side of vehicle)
-	debug_camera.position = Vector3(0.5, 0.3, 0)  # 0.5m to right, 0.3m above
-	
-	# Add to scene first
-	add_child(debug_camera)
-	
-	# Manually set rotation for proper side view
-	# Look from the side toward the vehicle (along -X axis)
-	debug_camera.rotation_degrees = Vector3(0, 90, 0)
-	
-	# Set camera properties for close-up view
-	debug_camera.size = 0.8  # Orthographic size for close view
-	
-	# Make this the current camera for preview
-	debug_camera.current = true
-	
-	# Print debug info
-	print("Debug side camera created at position: ", debug_camera.position)
-	print("Debug camera rotation: ", debug_camera.rotation_degrees)
-	print("Debug camera set as current - should show side view of vehicle")
-	print("Use DebugSideCamera in editor to view wheel behavior")
 
 func spawn_vehicle(vehicle_id: String, position: Vector3 = Vector3.ZERO) -> BaseVehicle:
 	var vehicle_data = vehicle_database.get_vehicle(vehicle_id)
