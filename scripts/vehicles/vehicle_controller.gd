@@ -46,6 +46,8 @@ var vertical_velocity := 0.0
 @export var wheel_rotation_multiplier := 2.0
 @export var max_steering_angle := 30.0  # degrees
 
+@export var debug_vehicle_collision := false
+
 
 
 
@@ -83,8 +85,8 @@ func setup_from_data(data: VehicleData):
 	# Load visual mesh
 	load_vehicle_mesh(data.mesh_path)
 	
-	# Setup collision
-	setup_collision(data.collision_size)
+	# GLB collision shapes are used - no manual collision setup needed
+	# setup_collision(data.collision_size)
 	
 	# Setup wheels
 	setup_wheels()
@@ -102,28 +104,214 @@ func load_vehicle_mesh(mesh_path: String):
 		
 		# Show mesh transform immediately after instantiation
 		print("=== MESH TRANSFORM (CODE LOADED) ===")
-		print("Initial rotation: ", mesh_instance.rotation_degrees)
-		print("Initial position: ", mesh_instance.position)
-		print("Initial scale: ", mesh_instance.scale)
+		if mesh_instance is Node3D:
+			print("Initial rotation: ", (mesh_instance as Node3D).rotation_degrees)
+			print("Initial position: ", (mesh_instance as Node3D).position)
+			print("Initial scale: ", (mesh_instance as Node3D).scale)
+		else:
+			print("Initial transform: <non-Node3D root>")
 		print("=====================================")
 		
 		# Replace existing CarMesh
-		var old_mesh = $Visual/CarMesh
+		var old_mesh: Node3D = $Visual/CarMesh
 		$Visual.remove_child(old_mesh)
 		old_mesh.queue_free()
 		
 		$Visual.add_child(mesh_instance)
 		mesh_instance.name = "CarMesh"
+		if not copy_glb_collision_from_visual():
+			$CollisionShape3D.disabled = true
+			$CollisionShape3D.shape = null
+			push_error("Vehicle GLB has no collision shapes. Add collision (e.g., convcolonly_...) to the GLB.")
 		
 		# Show transform after being added to scene tree
 		print("=== MESH TRANSFORM (AFTER PARENTING) ===")
-		print("Final rotation: ", mesh_instance.rotation_degrees)
-		print("Final position: ", mesh_instance.position)
-		print("Final scale: ", mesh_instance.scale)
+		if mesh_instance is Node3D:
+			print("Final rotation: ", (mesh_instance as Node3D).rotation_degrees)
+			print("Final position: ", (mesh_instance as Node3D).position)
+			print("Final scale: ", (mesh_instance as Node3D).scale)
+		else:
+			print("Final transform: <non-Node3D root>")
 		print("=====================================")
 		print("Mesh loaded and attached successfully")
 	else:
 		push_error("Failed to load mesh scene: " + mesh_path)
+
+func copy_glb_collision_from_visual() -> bool:
+	var car_mesh: Node = $Visual.get_node_or_null("CarMesh")
+	if not car_mesh:
+		return false
+
+	var found_shapes: Array[CollisionShape3D] = []
+	_collect_collision_shapes(car_mesh, found_shapes)
+	if found_shapes.is_empty():
+		if debug_vehicle_collision:
+			print("[VehicleCollision] No CollisionShape3D found in GLB CarMesh")
+		return false
+
+	if debug_vehicle_collision:
+		print("[VehicleCollision] Found ", found_shapes.size(), " CollisionShape3D nodes in GLB CarMesh")
+
+	var src: CollisionShape3D = found_shapes[0]
+	if not src.shape:
+		return false
+	if found_shapes.size() > 1:
+		push_warning("Vehicle GLB has multiple CollisionShape3D nodes. Only the first one will be used.")
+	if debug_vehicle_collision:
+		print("[VehicleCollision] Using first shape only")
+		print("[VehicleCollision]  src=", src.get_path(),
+			" shape=", src.shape.get_class(),
+			" src_gt.origin=", src.global_transform.origin,
+			" src_gt.basis=", src.global_transform.basis)
+		_print_shape_details(src.shape)
+
+	var src_gt := src.global_transform
+	var src_scale := src_gt.basis.get_scale()
+	var local_xform := global_transform.affine_inverse() * src_gt
+	if debug_vehicle_collision:
+		print("[VehicleCollision]  src_scale=", src_scale)
+		print("[VehicleCollision]  local_xform.origin=", local_xform.origin, " basis=", local_xform.basis)
+
+	var copied_shape: Shape3D = src.shape.duplicate(true)
+	if copied_shape is BoxShape3D:
+		var box := copied_shape as BoxShape3D
+		box.size = Vector3(
+			box.size.x * abs(src_scale.x),
+			box.size.y * abs(src_scale.y),
+			box.size.z * abs(src_scale.z)
+		)
+		if debug_vehicle_collision:
+			print("[VehicleCollision]  baked Box size=", box.size)
+	elif copied_shape is SphereShape3D:
+		var s := copied_shape as SphereShape3D
+		s.radius = s.radius * max(abs(src_scale.x), abs(src_scale.y), abs(src_scale.z))
+	elif copied_shape is CapsuleShape3D:
+		var c := copied_shape as CapsuleShape3D
+		c.radius = c.radius * max(abs(src_scale.x), abs(src_scale.z))
+		c.height = c.height * abs(src_scale.y)
+	elif copied_shape is CylinderShape3D:
+		var cy := copied_shape as CylinderShape3D
+		cy.radius = cy.radius * max(abs(src_scale.x), abs(src_scale.z))
+		cy.height = cy.height * abs(src_scale.y)
+
+	$CollisionShape3D.shape = copied_shape
+	$CollisionShape3D.disabled = false
+	$CollisionShape3D.transform = local_xform
+
+	_remove_glb_collision_objects(car_mesh)
+	if debug_vehicle_collision:
+		print("[VehicleCollision] Copied 1 shape from GLB into CharacterBody3D CollisionShape3D and removed GLB collision objects.")
+	return true
+
+func _collect_collision_shapes(node: Node, out: Array[CollisionShape3D]) -> void:
+	for child in node.get_children():
+		if child is CollisionShape3D:
+			out.append(child)
+		_collect_collision_shapes(child, out)
+
+func _collect_collision_objects(node: Node, out: Array[CollisionObject3D]) -> void:
+	for child in node.get_children():
+		if child is CollisionObject3D:
+			out.append(child)
+		_collect_collision_objects(child, out)
+
+func _remove_glb_collision_objects(car_mesh: Node) -> void:
+	var objects: Array[CollisionObject3D] = []
+	_collect_collision_objects(car_mesh, objects)
+	if debug_vehicle_collision:
+		print("[VehicleCollision] Removing ", objects.size(), " CollisionObject3D nodes inside GLB CarMesh")
+	for obj in objects:
+		(obj as Node).queue_free()
+		if debug_vehicle_collision:
+			print("[VehicleCollision]  removed obj=", (obj as Node).get_path(), " class=", obj.get_class())
+
+func _print_shape_details(shape: Shape3D) -> void:
+	if not debug_vehicle_collision:
+		return
+	if shape is BoxShape3D:
+		print("[VehicleCollision]   Box size=", (shape as BoxShape3D).size)
+	elif shape is SphereShape3D:
+		print("[VehicleCollision]   Sphere radius=", (shape as SphereShape3D).radius)
+	elif shape is CapsuleShape3D:
+		print("[VehicleCollision]   Capsule radius=", (shape as CapsuleShape3D).radius, " height=", (shape as CapsuleShape3D).height)
+	elif shape is CylinderShape3D:
+		print("[VehicleCollision]   Cylinder radius=", (shape as CylinderShape3D).radius, " height=", (shape as CylinderShape3D).height)
+	elif shape is ConvexPolygonShape3D:
+		var pts := (shape as ConvexPolygonShape3D).points
+		print("[VehicleCollision]   Convex points=", pts.size())
+	elif shape is ConcavePolygonShape3D:
+		var faces := (shape as ConcavePolygonShape3D).data
+		print("[VehicleCollision]   Concave face_data_len=", faces.size())
+	else:
+		print("[VehicleCollision]   Shape type=", shape.get_class())
+
+func generate_box_collision_from_visual() -> void:
+	var collision_shape: CollisionShape3D = $CollisionShape3D
+	if not collision_shape:
+		return
+
+	var car_mesh: Node3D = $Visual.get_node_or_null("CarMesh")
+	if not car_mesh:
+		return
+
+	var mesh_instances: Array[MeshInstance3D] = []
+	_collect_mesh_instances(car_mesh, mesh_instances)
+	if mesh_instances.is_empty():
+		var fallback := BoxShape3D.new()
+		fallback.size = Vector3(1.0, 1.0, 2.0)
+		collision_shape.shape = fallback
+		collision_shape.position = Vector3(0.0, fallback.size.y * 0.5, 0.0)
+		return
+
+	var has_bounds := false
+	var min_v := Vector3.ZERO
+	var max_v := Vector3.ZERO
+
+	for mi in mesh_instances:
+		if not mi.mesh:
+			continue
+		var aabb := mi.get_aabb()
+		var corners := PackedVector3Array([
+			Vector3(aabb.position.x, aabb.position.y, aabb.position.z),
+			Vector3(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z),
+			Vector3(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z),
+			Vector3(aabb.position.x, aabb.position.y, aabb.position.z + aabb.size.z),
+			Vector3(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z),
+			Vector3(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z + aabb.size.z),
+			Vector3(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
+			Vector3(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
+		])
+
+		for c in corners:
+			var world_p := mi.global_transform * c
+			var local_p := to_local(world_p)
+			if not has_bounds:
+				min_v = local_p
+				max_v = local_p
+				has_bounds = true
+			else:
+				min_v = min_v.min(local_p)
+				max_v = max_v.max(local_p)
+
+	if not has_bounds:
+		return
+
+	var size := max_v - min_v
+	size.x = max(size.x, 0.05)
+	size.y = max(size.y, 0.05)
+	size.z = max(size.z, 0.05)
+
+	var center := (min_v + max_v) * 0.5
+	var box := BoxShape3D.new()
+	box.size = size
+	collision_shape.shape = box
+	collision_shape.position = center
+
+func _collect_mesh_instances(node: Node, out: Array[MeshInstance3D]) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			out.append(child)
+		_collect_mesh_instances(child, out)
 
 func setup_collision(collision_size: Vector3):
 	var collision_shape = $CollisionShape3D

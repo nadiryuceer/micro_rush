@@ -50,11 +50,11 @@ static func create_vehicle_data_from_dict(data_dict: Dictionary) -> VehicleData:
 	vehicle_data.size_category = data_dict.get("size_category", 1)
 	
 	# Physics data
-	vehicle_data.collision_size = Vector3(
-		data_dict.get("collision_size", {}).get("x", 2.0),
-		data_dict.get("collision_size", {}).get("y", 1.0),
-		data_dict.get("collision_size", {}).get("z", 4.0)
-	)
+	#vehicle_data.collision_size = Vector3(
+	#	data_dict.get("collision_size", {}).get("x", 2.0),
+#		data_dict.get("collision_size", {}).get("y", 1.0),
+#		data_dict.get("collision_size", {}).get("z", 4.0)
+#	)
 	
 	# Wheel data
 	var wheel_positions = data_dict.get("wheel_positions", [])

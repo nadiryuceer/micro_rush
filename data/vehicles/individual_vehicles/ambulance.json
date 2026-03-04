@@ -5,11 +5,6 @@
   "mesh_path": "res://assets/models/vehicles/ambulance_inverted.glb",
   "vehicle_type": 7,
   "size_category": 2,
-  "collision_size": {
-    "x": 0.09,
-    "y": 0.05,
-    "z": 0.17
-  },
   "vehicle_stats": {
     "max_speed": 6.0,
     "acceleration": 6.5,

@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://b58g5vrxmf6d"]
 
-[ext_resource type="Script" path="res://scripts/vehicles/vehicle_controller.gd" id="1_ocm8f"]
-[ext_resource type="PackedScene" uid="uid://bu5oakgj4trtr" path="res://assets/models/vehicles/ambulance.glb" id="2_o7c0y"]
+[ext_resource type="Script" uid="uid://deellnh2j6cog" path="res://scripts/vehicles/vehicle_controller.gd" id="1_ocm8f"]
+[ext_resource type="PackedScene" uid="uid://bu5oakgj4trtr" path="res://assets/Models/vehicles/ambulance.glb" id="2_o7c0y"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ocm8f"]
 size = Vector3(0.075733, 0.0902661, 0.164922)
