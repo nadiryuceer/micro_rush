@@ -321,7 +321,7 @@ func setup_collision(collision_size: Vector3):
 		collision_shape.position.y = collision_size.y * 0.5
 
 func setup_wheels():
-	# Don't create custom wheels - use existing wheels from GLB mesh
+	# Use existing GLB wheels directly but calculate their center of volume
 	wheel_nodes.clear()
 	
 	# Find existing wheel nodes in the loaded mesh
@@ -333,6 +333,17 @@ func setup_wheels():
 	for wheel in wheel_nodes:
 		var pos_type = "Front" if "front" in wheel.name.to_lower() else "Rear"
 		print("  ", pos_type, " wheel: ", wheel.name, " at ", wheel.position)
+		
+		# Calculate and store the wheel's center of volume
+		var wheel_center = Vector3.ZERO
+		if wheel.mesh:
+			var aabb = wheel.mesh.get_aabb()
+			wheel_center = aabb.position + aabb.size * 0.5
+			print("  Wheel mesh bounds: ", aabb)
+			print("  Calculated wheel center: ", wheel_center)
+		
+		# Store the center for rotation calculations
+		wheel_original_rotations[wheel] = wheel_center
 
 func find_existing_wheels(node: Node):
 	# Recursively search for wheel nodes in the mesh hierarchy
@@ -375,10 +386,18 @@ func update_wheel_visuals(delta: float):
 	# Apply steering to front wheels only (based on their names)
 	for wheel in wheel_nodes:
 		if "front" in wheel.name.to_lower():
-			# Get the original rotation from GLB (stored during setup)
-			var original_rotation = wheel_original_rotations.get(wheel, 0.0)
-			# Apply steering relative to original GLB rotation
-			wheel.rotation.y = original_rotation + deg_to_rad(steering_angle_deg)
+			# Get the stored wheel center
+			var wheel_center = wheel_original_rotations.get(wheel, Vector3.ZERO)
+			
+			# Create rotation around the wheel's center of volume
+			# Transform approach: translate to origin, rotate, translate back
+			var rotation_transform = Transform3D()
+			rotation_transform = rotation_transform.translated(-wheel_center)
+			rotation_transform = rotation_transform.rotated(Vector3.UP, deg_to_rad(steering_angle_deg))
+			rotation_transform = rotation_transform.translated(wheel_center)
+			
+			# Apply the transform to the wheel
+			wheel.transform = rotation_transform
 		# Rear wheels: don't touch their rotation at all
 
 
@@ -400,7 +419,6 @@ func handle_input(delta: float) -> void:
 	boosting = Input.is_action_pressed("boost") and abs(current_speed) > 2.0
 	if not is_on_floor():
 		boosting = false
-
 
 	# --- SPEED CONTROL ---
 	if boosting:
@@ -432,8 +450,6 @@ func handle_input(delta: float) -> void:
 				0.0,
 				steer_amount * drag_strength * speed_factor * delta
 			)
-
-
 
 
 # ---------------- MOVEMENT ----------------
