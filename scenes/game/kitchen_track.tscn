@@ -30,3 +30,11 @@ transform = Transform3D(1, 0, 0, 0, 5, 0, 0, 0, 30, -15, 2.5, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 
 [node name="kitchen_table" parent="." instance=ExtResource("4_cncgb")]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707106, 0.707106, -0.5, -0.612372, 0.612372, 0, 0, 0)
+light_energy = 2.0
+shadow_enabled = true
+shadow_bias = 0.05
+shadow_normal_bias = 0.3
+directional_shadow_max_distance = 50.0

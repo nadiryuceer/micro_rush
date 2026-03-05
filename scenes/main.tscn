@@ -1,20 +1,6 @@
-[gd_scene load_steps=4 format=3 uid="uid://nxrolsj4p4bx"]
+[gd_scene load_steps=2 format=3 uid="uid://nxrolsj4p4bx"]
 
-[ext_resource type="PackedScene" uid="uid://dabj8peeucvi1" path="res://scenes/game/kitchen_track.tscn" id="3_1bvp3"]
-[ext_resource type="PackedScene" uid="uid://bbbqgry8ofnx2" path="res://scenes/game/camera_rig.tscn" id="3_h2yge"]
 [ext_resource type="Script" uid="uid://ckec7errjptsh" path="res://scripts/core/game_manager.gd" id="game_manager"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("game_manager")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707106, 0.707106, -0.5, -0.612372, 0.612372, 0, 0, 0)
-light_energy = 2.0
-shadow_enabled = true
-shadow_bias = 0.05
-shadow_normal_bias = 0.3
-directional_shadow_max_distance = 50.0
-
-[node name="CameraRig" parent="." instance=ExtResource("3_h2yge")]
-
-[node name="Track" parent="." instance=ExtResource("3_1bvp3")]
