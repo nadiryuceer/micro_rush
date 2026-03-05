@@ -1,10 +1,12 @@
 extends Control
 
+@onready var title_label: Label = $VBoxContainer/Title
 @onready var race_button: Button = $VBoxContainer/RaceButton
 @onready var options_button: Button = $VBoxContainer/OptionsButton
 
 func _ready():
 	add_to_group("menus")
+	title_label.text = "Micro Rush"
 	race_button.pressed.connect(_on_race_pressed)
 	options_button.pressed.connect(_on_options_pressed)
 
