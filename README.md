@@ -16,7 +16,7 @@ Micro Rush transforms a car physics demo into a complete top-down racing game fe
 - **1 Godot unit = 1 meter** (real-world scale)
 - **Vehicle dimensions**: 0.07m length, 0.04-0.05m width, 0.02-0.03m height
 - **Speed range**: 2.0-4.0 m/s for toy vehicles
-- **Track size**: 60x60m minimum for kitchen environments
+- **Track size**: TBD
 
 ## Architecture
 

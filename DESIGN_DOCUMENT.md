@@ -32,7 +32,7 @@ Transform the existing NMMI car demo into a complete Micro Machines V4-inspired 
 - **Vehicle mesh scale = 1.0** (no rescaling)
 - **Forward direction**: -Z axis (negative Z is forward)
 - **Gravity**: 9.8 m/s²
-- **World elements**: Kitchen tiles (0.5m), counter height (0.9m), track size (60x60m minimum)
+- **World elements**: Kitchen tiles (0.5m), counter height (0.9m), track size (60x60m minimum)(Not final)
 - **Progression system** with unlockable content
 - **Local multiplayer** focus with online potential
 
