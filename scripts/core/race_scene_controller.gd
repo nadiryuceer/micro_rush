@@ -2,6 +2,7 @@ extends Node3D
 
 var race_mode: String = ""
 var map_name: String = ""
+var players: Array[Node3D] = []
 
 func _ready():
 	# Get race parameters from scene metadata
@@ -17,6 +18,15 @@ func setup_race(mode: String, map: String):
 	print("Setting up race: ", race_mode, " on ", map_name)
 	
 	# Create race components using GameFactory static methods
+	# Add camera rig first
+	print("Creating camera rig...")
+	var camera_rig = GameFactory.create_camera_rig()
+	if camera_rig:
+		add_child(camera_rig)
+		print("Camera rig created and added to scene")
+	else:
+		print("ERROR: Failed to create camera rig")
+	
 	# Add track
 	print("Creating track...")
 	var track = GameFactory.create_track(map_name)
@@ -26,27 +36,20 @@ func setup_race(mode: String, map: String):
 	else:
 		print("ERROR: Failed to create track")
 	
-	# Add camera rig
-	print("Creating camera rig...")
-	var camera_rig = GameFactory.create_camera_rig()
-	if camera_rig:
-		add_child(camera_rig)
-		print("Camera rig created and added to scene")
-	else:
-		print("ERROR: Failed to create camera rig")
-	
 	# Add player vehicle
 	print("Creating player vehicle...")
 	var player_vehicle = GameFactory.create_player_vehicle()
 	if player_vehicle:
 		add_child(player_vehicle)
 		print("Player vehicle created and added to scene")
-		# Add vehicle to camera
-		if camera_rig and camera_rig.get("players"):
-			camera_rig.players.append(player_vehicle)
-			print("Vehicle added to camera follow list")
-		else:
-			print("WARNING: Could not add vehicle to camera")
+		
+		# Add vehicle to race scene's players array
+		players.append(player_vehicle)
+		print("Vehicle added to race scene players array (", players.size(), " vehicles)")
+		
+		# Pass players array to camera rig for tracking
+		camera_rig.players = players
+		print("Players array passed to camera rig")
 	else:
 		print("ERROR: Failed to create player vehicle")
 	
