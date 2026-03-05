@@ -6,12 +6,12 @@
   "vehicle_type": 7,
   "size_category": 2,
   "vehicle_stats": {
-    "max_speed": 6.0,
-    "acceleration": 6.5,
-    "steering_speed": 3.2,
-    "grip": 18.0,
-    "boost_force": 35.0,
-    "drag": 6.0,
-    "weight": 1.2
-  }
+  "max_speed": 2.8,
+  "acceleration": 3.5,
+  "steering_speed": 3.2,
+  "grip": 17.0,
+  "boost_force": 22.0,
+  "drag": 5.5,
+  "weight": 0.8
+}
 }
